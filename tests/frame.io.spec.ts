@@ -54,4 +54,23 @@ describe("frame.io", ()=>{
                 expect(frame.data.toString()).toBe("hi, lobster");
             });
     });
+
+    it("should receive response with delay", ()=>{
+        let io = new FrameIO(12);
+
+        io.output.subscribe((b)=>{
+            
+            setTimeout(()=>{
+                let frame = io.protocol.read(b);
+                let response = new Frame(12, FrameIO.RESPONSE, frame.id, Buffer.from("hi, lobster") );
+                io.input.notify(io.protocol.write( response ) );
+            }, 500);
+        });
+
+        return io
+            .request(Buffer.from("hello, crab"))
+            .then((frame)=>{
+                expect(frame.data.toString()).toBe("hi, lobster");
+            });
+    });
 });

@@ -1,5 +1,6 @@
 import {Stream} from "litestream";
 import {Frame, Protocol} from "./protocol";
+import {ResponseResolver} from "./response.resolver";
 
 export class FrameIO{
     static SIGNAL : number = 1;
@@ -17,11 +18,11 @@ export class FrameIO{
     
     private _id : number = 0;
     
-    private _resolvers : {[id:number] : ((arg)=>void)[]};
+    private _responseResolver : ResponseResolver;
     
-    constructor( private _magic : number ){
+    constructor( private _magic : number, repeatCount : number = 3, repeatTimeout : number= 1000 ){
+        this._responseResolver = new ResponseResolver(repeatCount, repeatTimeout);
         this._protocol = new Protocol();
-        this._resolvers = {};
         this._output = new Stream<Buffer>();
         this._input = new Stream<Buffer>();
         
@@ -40,34 +41,22 @@ export class FrameIO{
         this._onResponse = this._onFrame.when((f)=>f && f.type == FrameIO.RESPONSE);
         this._onRequest = this._onFrame.when((f)=>f && f.type == FrameIO.REQUEST);
         
-        this._onResponse.subscribe((frame:Frame)=>{
-            let r = this._resolvers[frame.id];
-            delete this._resolvers[frame.id];
-            if( r ){
-                r[0](frame);
-            }
-        });
+        this._onResponse.pipe(this._responseResolver);
+        this._responseResolver
+            .repeats.mapTo((frame)=>this.protocol.write(frame))
+            .pipe(this.output);
     }
     
     request( data : Buffer ) : Promise<Frame> {
-        return new Promise<Frame>((resolve, reject)=>{
-            let frame = new Frame(this._magic, FrameIO.REQUEST, this.nextId, data);
-            this.dispatchFrame(frame);
-            this._resolvers[frame.id] = [this.wrapResolver(frame, resolve), this.wrapResolver(frame, reject)];
-        });
+        let frame = new Frame(this._magic, FrameIO.REQUEST, this.nextId, data);
+        this.dispatchFrame(frame);
+        return this._responseResolver.waitResponseFor(frame);
     }
     
     signal( data : Buffer ) : Frame{
         let frame = new Frame(this._magic, FrameIO.SIGNAL, this.nextId, data);
         this.dispatchFrame(frame);
         return frame;
-    }
-    
-    private wrapResolver(frame : Frame, cb : Function ){
-        return (arg)=>{
-            delete this._resolvers[frame.id];
-            cb(arg);
-        };
     }
     
     private dispatchFrame(frame : Frame){
@@ -89,7 +78,11 @@ export class FrameIO{
     }
     
     get nextId() {
-        this._id++;
+        if( this._id == Number.MAX_SAFE_INTEGER ){
+            this._id = 0;
+        } else {
+            this._id ++;
+        }
         return this._id;
     }
     
