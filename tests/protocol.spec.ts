@@ -5,7 +5,7 @@ describe("protocol", ()=>{
         //[magic:4][type:1 byte][id:8byte][len:4byte][data:len]
         let buffer = Buffer.alloc(17);//new Buffer([]);
         buffer.writeUInt32LE(2305, 0);
-        buffer.writeInt8(13, 4);
+        buffer.writeUInt8(13, 4);
         buffer.writeUInt32LE(1234567, 5);
         buffer.writeUInt32LE(0, 13);
         
