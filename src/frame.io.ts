@@ -37,11 +37,11 @@ export class FrameIO{
             return null;
         });
         
-        this._onSignal = this._onFrame.when((f)=>f && f.type == FrameIO.SIGNAL);
-        this._onResponse = this._onFrame.when((f)=>f && f.type == FrameIO.RESPONSE);
-        this._onRequest = this._onFrame.when((f)=>f && f.type == FrameIO.REQUEST);
+        this._onSignal   = this._onFrame.when((f)=>f && f.type == FrameIO.SIGNAL );
+        this._onRequest  = this._onFrame.when((f)=>f && f.type == FrameIO.REQUEST );
+        this._onResponse = this._onFrame.when((f)=>f && f.type == FrameIO.RESPONSE );
         
-        this._onResponse.pipe(this._responseResolver);
+        this._onResponse.pipe(this._responseResolver); 
         this._responseResolver
             .repeats.mapTo((frame)=>this.protocol.write(frame))
             .pipe(this.output);
@@ -88,5 +88,9 @@ export class FrameIO{
     
     get lastId(){
         return this._id;
+    }
+    
+    get magic(){
+        return this._magic;
     }
 }
