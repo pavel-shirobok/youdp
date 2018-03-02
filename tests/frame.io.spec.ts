@@ -1,21 +1,21 @@
-import {FrameIO} from "../src/frame.io";
-import {Frame} from "../src/protocol";
+import {PacketIO} from "../src/frame.io";
+import {Packet} from "../src/protocol";
 
 describe("frame.io", ()=>{
     
     it("should output frame signal", ()=>{
         return new Promise((resolve)=>{
-            let io = new FrameIO(12);
-            let f = io.signal(Buffer.from("test"));
+            let io = new PacketIO(12);
+            let f = io.signal(Packet.create(null, 12,1,1, Buffer.from("test")));
             
-            io.output.subscribe((buffer:Buffer)=>{
-                let rFrame = io.protocol.read(buffer);
+            io.output.subscribe((rFrame : Packet)=>{
+                //let rFrame = //io.protocol.read(buffer);
                 
                 expect(rFrame.id).toBe(f.id);
                 expect(rFrame.magic).toBe(f.magic);
                 expect(rFrame.magic).toBe(12);
                 expect(rFrame.type).toBe(f.type);
-                expect(rFrame.type).toBe(FrameIO.SIGNAL);
+                expect(rFrame.type).toBe(PacketIO.SIGNAL);
                 expect(rFrame.data.toString()).toBe(f.data.toString());
                 expect(rFrame.data.toString()).toBe("test");
                 
@@ -26,13 +26,13 @@ describe("frame.io", ()=>{
     
     it("should output frame request", ()=>{
         return new Promise((resolve)=>{
-            let io = new FrameIO(12);
-            io.request(Buffer.from("test"));
+            let io = new PacketIO(12);
+            io.request(Packet.create(null, 12, PacketIO.REQUEST, 1, Buffer.from("test")));
 
-            io.output.subscribe((buffer:Buffer)=>{
-                let rFrame = io.protocol.read(buffer);
+            io.output.subscribe((rFrame)=>{
+                //let rFrame = io.protocol.read(buffer);
                 expect(rFrame.magic).toBe(12);
-                expect(rFrame.type).toBe(FrameIO.REQUEST);
+                expect(rFrame.type).toBe(PacketIO.REQUEST);
                 expect(rFrame.data.toString()).toBe("test");
                 resolve();
             });
@@ -40,35 +40,33 @@ describe("frame.io", ()=>{
     });
 
     it("should receive response", ()=>{
-        let io = new FrameIO(12);
+        let io = new PacketIO(12);
         
-        io.output.subscribe((b)=>{
-            let frame = io.protocol.read(b);
-            let response = new Frame(12, FrameIO.RESPONSE, frame.id, Buffer.from("hi, lobster") );
-            io.input.notify(io.protocol.write( response ) );
+        io.output.subscribe((packet : Packet)=>{
+            io.input.notify(Packet.create(null, packet.magic, PacketIO.RESPONSE, packet.id, Buffer.from("hi, lobster")) );
         });
         
         return io
-            .request(Buffer.from("hello, crab"))
+            .request(Packet.create(null, 12, PacketIO.REQUEST, 1, Buffer.from("hello, crab")))
             .then((frame)=>{
                 expect(frame.data.toString()).toBe("hi, lobster");
             });
     });
 
     it("should receive response with delay", ()=>{
-        let io = new FrameIO(12);
+        let io = new PacketIO(12);
 
-        io.output.subscribe((b)=>{
+        io.output.subscribe((packet)=>{
             
             setTimeout(()=>{
-                let frame = io.protocol.read(b);
-                let response = new Frame(12, FrameIO.RESPONSE, frame.id, Buffer.from("hi, lobster") );
-                io.input.notify(io.protocol.write( response ) );
+                //let frame = io.protocol.read(b);
+                let response = Packet.create(null,12, PacketIO.RESPONSE, packet.id, Buffer.from("hi, lobster") );
+                io.input.notify(response );
             }, 500);
         });
 
         return io
-            .request(Buffer.from("hello, crab"))
+            .request(Packet.create(null,12, PacketIO.REQUEST, 1, Buffer.from("hello, crab") ))
             .then((frame)=>{
                 expect(frame.data.toString()).toBe("hi, lobster");
             });

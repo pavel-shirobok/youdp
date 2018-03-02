@@ -1,4 +1,4 @@
-import {Frame, Protocol} from "../src/protocol";
+import {Packet, Protocol} from "../src/protocol";
 
 describe("protocol", ()=>{
     it("should read header with null data", ()=>{
@@ -10,8 +10,8 @@ describe("protocol", ()=>{
         buffer.writeUInt32LE(0, 13);
         
         let p = new Protocol();
-        
-        let f = p.read(buffer);
+        let pk = new Packet(null);
+        let f = p.read(buffer, pk);
         
         expect(f.magic).toBe(2305);
         expect(f.type).toBe(13);
@@ -33,7 +33,8 @@ describe("protocol", ()=>{
         //console.log(buffer);
         
         let p = new Protocol();
-        let f = p.read(buffer);
+        let pk = new Packet(null);
+        let f = p.read(buffer, pk);
 
         expect(f.magic).toBe(2305);
         expect(f.type).toBe(13);
@@ -42,17 +43,25 @@ describe("protocol", ()=>{
         expect(f.data.toString()).toBe("Test data");
     });
     
-    it("should write and read frame", ()=>{
-        let f = new Frame(23051989, 123, 123456, Buffer.from("Hi!"));
-        let p = new Protocol();
-        let b = p.write(f);
+    it("should write and read packet", ()=>{
+        //let f = new Frame(23051989, 123, 123456, Buffer.from("Hi!"));
+        let pk1 = new Packet(null);
+        pk1.magic = 23051989;
+        pk1.type = 123;
+        pk1.id = 123456;
+        pk1.data = Buffer.from("Hi!");
+        //pk1.
         
-        let f2 = p.read(b);
+        let p = new Protocol();
+        let b = p.write(pk1);
+        
+        let pk = new Packet(null)
+        let f2 = p.read(b, pk);
 
-        expect(f.magic).toBe(f2.magic);
-        expect(f.type).toBe(f2.type);
-        expect(f.id).toBe(f2.id);
-        expect(f.data.length).toBe(f2.data.length);
-        expect(f.data.toString()).toBe(f2.data.toString());
+        expect(pk1.magic).toBe(f2.magic);
+        expect(pk1.type).toBe(f2.type);
+        expect(pk1.id).toBe(f2.id);
+        expect(pk1.data.length).toBe(f2.data.length);
+        expect(pk1.data.toString()).toBe(f2.data.toString());
     });
 });

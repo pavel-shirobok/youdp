@@ -1,5 +1,5 @@
 import {ResponseResolver} from "../src/response.resolver";
-import {Frame} from "../src/protocol";
+import {Packet} from "../src/protocol";
 
 describe("response.resolver", ()=>{
     
@@ -9,10 +9,11 @@ describe("response.resolver", ()=>{
     });
     
     it("should resolve response", ()=>{
-       let f = new Frame(1, 0, 1, Buffer.from([]));
-       
+       let f = Packet.create(null, 1, 0, 1, Buffer.from([]))//new Frame(1, 0, 1, Buffer.from([]));
+        
+        
        setTimeout(()=>{
-           resolver.resolveResponse( new Frame(1, 1, 1, Buffer.from([])) );
+           resolver.resolveResponse( Packet.create(null, 1, 1, 1, Buffer.from([])) );
        }, 50);
        
        return resolver
@@ -32,11 +33,11 @@ describe("response.resolver", ()=>{
         });
         
         setTimeout(()=>{
-            resolver.resolveResponse( new Frame(1, 1, 1, Buffer.from([])) );
+            resolver.resolveResponse( Packet.create(null,1, 1, 1, Buffer.from([])) );
         }, 210);
         
         return resolver
-            .waitResponseFor(new Frame(1, 0, 1, Buffer.from([])))
+            .waitResponseFor(Packet.create(null,1, 0, 1, Buffer.from([])))
             .then((resp)=>{ 
                 
                 expect(count).toBe(2);
@@ -54,7 +55,7 @@ describe("response.resolver", ()=>{
         });
 
         return resolver
-            .waitResponseFor(new Frame(1, 0, 1, Buffer.from([])))
+            .waitResponseFor(Packet.create(null,1, 0, 1, Buffer.from([])))
             .catch(()=>{
                 expect(count).toBe(3);
             });

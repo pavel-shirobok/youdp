@@ -1,25 +1,31 @@
 import {AddressInfo, Socket} from "dgram";
 import * as net from "net";
 import * as dgram from "dgram";
-import {FrameIO} from "./frame.io";
+import {PacketIO} from "./frame.io";
+import {NetworkAddress, Packet, Protocol} from "./protocol";
 
 export class UdpWrapper{
-    private _io : FrameIO;
+    private _io : PacketIO;
     private _boundIP : string;
     private _boundPort : number;
     private _isBound : boolean;
     private _isInBindingProcess : boolean;
     private _udp : Socket;
+    private _protocol : Protocol;
+    private _id : number = 0;
     
-    constructor(){}
     
-    bind( io?: FrameIO, ip?:string, port ?: number ) : Promise<any>{
+    constructor(private _magic : number){
+        this._protocol = new Protocol();
+    }
+    
+    bind(io?: PacketIO, ip?:string, port ?: number ) : Promise<any>{
         if( this._isBound ) return Promise.reject( new Error("Already bound") );
         if( this._isInBindingProcess ) return Promise.reject( new Error("Already in binding progress") );
 
         this._isInBindingProcess = true;
         
-        this._io = io || new FrameIO(Math.floor(Math.random() * 1000), 3, 1000);
+        this._io = io || new PacketIO(Math.floor(Math.random() * 1000), 3, 1000);
         
         return this
             .resolveLocalAddress(ip, port)
@@ -33,6 +39,26 @@ export class UdpWrapper{
                 this._isInBindingProcess = false;
                 return Promise.reject(e);
             });
+    }
+    
+    signal(addr : NetworkAddress, data : Buffer ) : Packet {
+        let packet = new Packet(addr);
+        packet.magic = this._magic;
+        packet.type = PacketIO.SIGNAL;
+        packet.id = this.nextId;
+        packet.data = data;
+        packet.updateBuffer(this._protocol);
+        return this.io.signal(packet);
+    }
+    
+    request(addr : NetworkAddress, data : Buffer ) : Promise<Packet> {
+        let packet = new Packet(addr);
+        packet.magic = this._magic;
+        packet.type = PacketIO.REQUEST;
+        packet.id = this.nextId;
+        packet.data = data;
+        packet.updateBuffer(this._protocol);
+        return this.io.request(packet);
     }
     
     unbind(){
@@ -77,8 +103,10 @@ export class UdpWrapper{
                 resolve();
             });
 
-            this._udp.on("message", (msg, rinfo : AddressInfo)=>{
-                this._io.input.notify(msg);
+            this._udp.on("message", (msg : Buffer, rinfo : AddressInfo)=>{
+                let packet = new Packet(new NetworkAddress(rinfo.address, rinfo.port));
+                packet.fillBy(msg, this._protocol);
+                this._io.input.notify(packet);
             });
 
             this._udp.on("error", (e)=>{
@@ -95,6 +123,19 @@ export class UdpWrapper{
 
             this._udp.bind(this.port, this.ip);
         });
+    }
+
+    get nextId() {
+        if( this._id == Number.MAX_SAFE_INTEGER ){
+            this._id = 0;
+        } else {
+            this._id ++;
+        }
+        return this._id;
+    }
+
+    get lastId(){
+        return this._id;
     }
 
     get io(){

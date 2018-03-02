@@ -1,93 +1,60 @@
 import {Stream} from "litestream";
-import {Frame, Protocol} from "./protocol";
+import {NetworkAddress, Packet} from "./protocol";
 import {ResponseResolver} from "./response.resolver";
 
-export class FrameIO{
+export class PacketIO{
     static SIGNAL : number = 1;
     static REQUEST : number = 2;
     static RESPONSE : number = 3;
     
-    private _protocol : Protocol;
-    private _input : Stream<Buffer>;
-    private _output: Stream<Buffer>;
+    //private _protocol : Protocol;
+    private _input : Stream<Packet>;
+    private _output: Stream<Packet>;
     
-    private _onFrame : Stream<Frame>;
-    private _onSignal : Stream<Frame>;
-    private _onResponse : Stream<Frame>;
-    private _onRequest : Stream<Frame>;
-    
-    private _id : number = 0;
+    private _onPacket : Stream<Packet>;
+    private _onSignal : Stream<Packet>;
+    private _onResponse : Stream<Packet>;
+    private _onRequest : Stream<Packet>;
     
     private _responseResolver : ResponseResolver;
     
     constructor( private _magic : number, repeatCount : number = 3, repeatTimeout : number= 1000 ){
         this._responseResolver = new ResponseResolver(repeatCount, repeatTimeout);
-        this._protocol = new Protocol();
-        this._output = new Stream<Buffer>();
-        this._input = new Stream<Buffer>();
+        this._input = new Stream<Packet>();
+        this._output = new Stream<Packet>();
         
-        this._onFrame = this._input.mapTo<Frame>((b)=>{
-            try{
-                let frame = this._protocol.read(b);
-                if( frame.magic == this._magic){
-                    return frame;
-                }
-            }catch (e){}
-
-            return null;
-        });
+        this._onPacket = this._input.when((packet : Packet)=>packet.magic == this._magic);
         
-        this._onSignal   = this._onFrame.when((f)=>f && f.type == FrameIO.SIGNAL );
-        this._onRequest  = this._onFrame.when((f)=>f && f.type == FrameIO.REQUEST );
-        this._onResponse = this._onFrame.when((f)=>f && f.type == FrameIO.RESPONSE );
+        this._onSignal   = this._onPacket.when((f)=> f.type == PacketIO.SIGNAL );
+        this._onRequest  = this._onPacket.when((f)=> f.type == PacketIO.REQUEST );
+        this._onResponse = this._onPacket.when((f)=> f.type == PacketIO.RESPONSE );
         
-        this._onResponse.pipe(this._responseResolver); 
-        this._responseResolver
-            .repeats.mapTo((frame)=>this.protocol.write(frame))
-            .pipe(this.output);
+        this._onResponse.pipe(this._responseResolver);
+        this._responseResolver.repeats.pipe(this.output);
     }
     
-    request( data : Buffer ) : Promise<Frame> {
-        let frame = new Frame(this._magic, FrameIO.REQUEST, this.nextId, data);
-        this.dispatchFrame(frame);
-        return this._responseResolver.waitResponseFor(frame);
+    request( packet : Packet ) : Promise<Packet> {
+        this.dispatchPacket(packet);
+        return this._responseResolver.waitResponseFor(packet);
     }
     
-    signal( data : Buffer ) : Frame{
-        let frame = new Frame(this._magic, FrameIO.SIGNAL, this.nextId, data);
-        this.dispatchFrame(frame);
-        return frame;
+    signal( packet : Packet ) : Packet{
+        this.dispatchPacket(packet);
+        return packet;
     }
     
-    private dispatchFrame(frame : Frame){
+    private dispatchPacket(packet : Packet){
         setTimeout(()=>{
-            this.output.notify(this.protocol.write(frame));
+            this.output.notify(packet);
         }, 10);
     }
 
-    get input(): Stream<Buffer> {
+    get input(): Stream<Packet> {
         return this._input;
     }
 
-    get output(): Stream<Buffer> {
+    get output(): Stream<Packet> {
         return this._output;
-    }
-    
-    get protocol(): Protocol {
-        return this._protocol;
-    }
-    
-    get nextId() {
-        if( this._id == Number.MAX_SAFE_INTEGER ){
-            this._id = 0;
-        } else {
-            this._id ++;
-        }
-        return this._id;
-    }
-    
-    get lastId(){
-        return this._id;
     }
     
     get magic(){
