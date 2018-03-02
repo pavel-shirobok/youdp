@@ -1,7 +1,7 @@
 import {AddressInfo, Socket} from "dgram";
 import * as net from "net";
 import * as dgram from "dgram";
-import {PacketIO} from "./frame.io";
+import {PacketIO} from "./packet.io";
 import {NetworkAddress, Packet, Protocol} from "./protocol";
 
 export class UdpWrapper{

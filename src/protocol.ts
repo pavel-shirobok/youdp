@@ -1,11 +1,13 @@
+/**
+ * [magic:4][type:1 byte][id:8byte][len:4byte][data:len]
+ */
 export class Protocol{
-    //[magic:4][type:1 byte][id:8byte][len:4byte][data:len]
     
     read(buffer : Buffer, packet : Packet) : Packet{
         packet.packetBuffer = buffer.slice(0, buffer.length);
         packet.magic = buffer.readUInt32LE(0);
         packet.type  = buffer.readUIntLE(4, 1);
-        packet.id    = buffer.readUInt32LE(5); //buffer.slice(5, 13).toString('utf-8');
+        packet.id    = buffer.readUInt32LE(5);
         let len   = buffer.readUInt32LE(12);
         if( len > 0 ){
             packet.data  = buffer.slice(17, len);
@@ -60,26 +62,6 @@ export class Packet {
         return this._address;
     }
 }
-
-/*export class Frame{
-    constructor(  ){}
-    
-    get magic() {
-        return this._magic;
-    }
-
-    get type(): number {
-        return this._type;
-    }
-
-    get id(): number {
-        return this._id;
-    }
-    
-    get data(): Buffer {
-        return this._data;
-    }
-}*/
 
 export class NetworkAddress{
     constructor(private _ip : string, private _port : number){}

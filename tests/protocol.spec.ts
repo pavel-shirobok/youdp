@@ -1,4 +1,4 @@
-import {Packet, Protocol} from "../src/protocol";
+import {Packet, Protocol} from "../src";
 
 describe("protocol", ()=>{
     it("should read header with null data", ()=>{

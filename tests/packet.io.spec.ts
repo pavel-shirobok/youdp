@@ -1,9 +1,9 @@
-import {PacketIO} from "../src/frame.io";
-import {Packet} from "../src/protocol";
+import {PacketIO} from "../src";
+import {Packet} from "../src";
 
-describe("frame.io", ()=>{
+describe("packet.io", ()=>{
     
-    it("should output frame signal", ()=>{
+    it("should output packet signal", ()=>{
         return new Promise((resolve)=>{
             let io = new PacketIO(12);
             let f = io.signal(Packet.create(null, 12,1,1, Buffer.from("test")));

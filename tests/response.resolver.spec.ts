@@ -1,5 +1,5 @@
-import {ResponseResolver} from "../src/response.resolver";
-import {Packet} from "../src/protocol";
+import {ResponseResolver} from "../src";
+import {Packet} from "../src";
 
 describe("response.resolver", ()=>{
     

@@ -1,22 +1,22 @@
-import {Frame} from "./protocol";
 import {Stream} from "litestream";
+import {Packet} from "./protocol";
 
 export interface ResponseHandler{
     timestamp : number;
     counter : number;
-    request : Frame;
+    request : Packet;
     callbacks : Function[];
 }
 
-export class ResponseResolver extends Stream<Frame>{
-    public repeats : Stream<Frame>;
+export class ResponseResolver extends Stream<Packet>{
+    public repeats : Stream<Packet>;
 
     private _handlers : {[id:number] : ResponseHandler};
 
     constructor( private _repeatCount : number, private _repeatTimeout : number ){
         super();
         this._handlers = {};
-        this.repeats = new Stream<Frame>();
+        this.repeats = new Stream<Packet>();
         setInterval(()=>this.validateHandlers(), this._repeatTimeout / 4 );
     }
 
@@ -42,10 +42,10 @@ export class ResponseResolver extends Stream<Frame>{
         });
     }
 
-    waitResponseFor(requestFrame: Frame) : Promise<Frame> {
-        return new Promise<Frame>(( resolve, reject )=>{
-            this._handlers[requestFrame.id] = {
-                request : requestFrame,
+    waitResponseFor(requestPacket: Packet) : Promise<Packet> {
+        return new Promise<Packet>(( resolve, reject )=>{
+            this._handlers[requestPacket.id] = {
+                request : requestPacket,
                 counter : 3,
                 timestamp : Date.now(),
                 callbacks : [resolve, reject]
@@ -53,15 +53,15 @@ export class ResponseResolver extends Stream<Frame>{
         });
     }
 
-    resolveResponse( responseFrame : Frame ){
-        let handler = this._handlers[responseFrame.id];
+    resolveResponse( responsePacket : Packet ){
+        let handler = this._handlers[responsePacket.id];
         if( handler ){
-            handler.callbacks[0](responseFrame);
-            delete this._handlers[responseFrame.id];
+            handler.callbacks[0](responsePacket);
+            delete this._handlers[responsePacket.id];
         }
     }
 
-    notify(message: Frame): this {
+    notify(message: Packet): this {
         this.resolveResponse(message);
         return super.notify(message);
     }
