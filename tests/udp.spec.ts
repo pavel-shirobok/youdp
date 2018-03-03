@@ -36,7 +36,7 @@ describe("2 udp", ()=>{
 
     it("should send and receive signal", ()=>{
         return new Promise((resolve)=>{
-            udp2.io.onPacket.subscribe((s)=>{
+            udp2.io.onSignal.subscribe((s)=>{
                 
                 expect(s.magic).toBe(12);
                 expect(s.id).toBe(so.id);
@@ -46,6 +46,17 @@ describe("2 udp", ()=>{
             
             let so = udp1.signal(udp2.boundAddress, Buffer.from("Hi!"));
         });
+    });
+    
+    it("should send and receive request", ()=>{
+        udp2.io.onRequest.subscribe((s)=>{
+            udp2.response(s.address, s, Buffer.from("hello!"));
+        });
+
+        return udp1.request(udp2.boundAddress, Buffer.from("Hi!"))
+            .then((res)=>{
+                expect(res.data.toString()).toBe("hello!");
+            });
     });
 
     afterEach(()=>{

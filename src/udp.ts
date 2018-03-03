@@ -60,6 +60,16 @@ export class Udp{
         return this.io.request(packet);
     }
     
+    response(addr : NetworkAddress, request : Packet, responseData : Buffer){
+        let packet = new Packet(addr);
+        packet.magic = this._magic;
+        packet.type = PacketIO.RESPONSE;
+        packet.id = request.id;
+        packet.data = responseData;
+        packet.updateBuffer(this._protocol);
+        return this.io.response(packet);
+    }
+    
     unbind(){
         if( this._isBound ){
             this._io = null;

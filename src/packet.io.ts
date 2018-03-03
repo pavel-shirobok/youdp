@@ -42,6 +42,11 @@ export class PacketIO{
         this.dispatchPacket(packet);
         return packet;
     }
+
+    response(packet : Packet ) : Packet{
+        this.dispatchPacket(packet);
+        return packet;
+    }
     
     private dispatchPacket(packet : Packet){
         setTimeout(()=>{
