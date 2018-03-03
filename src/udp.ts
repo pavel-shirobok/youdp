@@ -1,13 +1,12 @@
-import {AddressInfo, Socket} from "dgram";
 import * as net from "net";
 import * as dgram from "dgram";
+import {AddressInfo, Socket} from "dgram";
 import {PacketIO} from "./packet.io";
 import {NetworkAddress, Packet, Protocol} from "./protocol";
 
-export class UdpWrapper{
+export class Udp{
     private _io : PacketIO;
-    private _boundIP : string;
-    private _boundPort : number;
+    private _boundAddress : NetworkAddress;
     private _isBound : boolean;
     private _isInBindingProcess : boolean;
     private _udp : Socket;
@@ -19,13 +18,13 @@ export class UdpWrapper{
         this._protocol = new Protocol();
     }
     
-    bind(io?: PacketIO, ip?:string, port ?: number ) : Promise<any>{
+    bind(ip?:string, port ?: number ) : Promise<any>{
         if( this._isBound ) return Promise.reject( new Error("Already bound") );
         if( this._isInBindingProcess ) return Promise.reject( new Error("Already in binding progress") );
 
         this._isInBindingProcess = true;
         
-        this._io = io || new PacketIO(Math.floor(Math.random() * 1000), 3, 1000);
+        this._io = new PacketIO(this._magic, 3, 1000);
         
         return this
             .resolveLocalAddress(ip, port)
@@ -73,16 +72,14 @@ export class UdpWrapper{
 
     private resolveLocalAddress(ip?:string, port?: number) : Promise<any> {
         if( port && ip ){
-            this._boundPort = port;
-            this._boundIP = ip;
+            this._boundAddress = new NetworkAddress(ip, port);
             return Promise.resolve();
         }
         
         return new Promise((resolve, reject)=>{
             let socket = net.createConnection(80, "google.com");
-            socket.on('connect', function() {
-                this._boundPort = port;
-                this._boundIP = socket.address().address;
+            socket.on('connect', ()=>{
+                this._boundAddress = new NetworkAddress(socket.address().address, port);
                 socket.end();
                 socket.removeAllListeners();
                 resolve();
@@ -121,7 +118,11 @@ export class UdpWrapper{
                 //TODO 
             });
 
-            this._udp.bind(this.port, this.ip);
+            this._io.output.subscribe((packet)=>{
+                this._udp.send(packet.packetBuffer, 0, packet.packetBuffer.length, packet.address.port, packet.address.ip);
+            });
+
+            this._udp.bind(this.boundAddress.port, this.boundAddress.ip);
         });
     }
 
@@ -142,11 +143,7 @@ export class UdpWrapper{
         return this._io;
     }
 
-    get ip(): string {
-        return this._boundIP;
-    }
-
-    get port(): number {
-        return this._boundPort;
+    get boundAddress(): NetworkAddress {
+        return this._boundAddress;
     }
 }

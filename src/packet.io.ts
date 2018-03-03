@@ -23,7 +23,7 @@ export class PacketIO{
         this._input = new Stream<Packet>();
         this._output = new Stream<Packet>();
         
-        this._onPacket = this._input.when((packet : Packet)=>packet.magic == this._magic);
+        this._onPacket = this._input.when((packet : Packet)=>packet.magic==this._magic);
         
         this._onSignal   = this._onPacket.when((f)=> f.type == PacketIO.SIGNAL );
         this._onRequest  = this._onPacket.when((f)=> f.type == PacketIO.REQUEST );
@@ -59,5 +59,21 @@ export class PacketIO{
     
     get magic(){
         return this._magic;
+    }
+    
+    get onPacket(): Stream<Packet> {
+        return this._onPacket;
+    }
+
+    get onSignal(): Stream<Packet> {
+        return this._onSignal;
+    }
+
+    get onResponse(): Stream<Packet> {
+        return this._onResponse;
+    }
+
+    get onRequest(): Stream<Packet> {
+        return this._onRequest;
     }
 }

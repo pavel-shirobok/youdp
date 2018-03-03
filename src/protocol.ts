@@ -14,7 +14,7 @@ export class Protocol{
         } else {
             packet.data  = Buffer.alloc(0);
         }
-        return packet
+        return packet;
     }
     
     write(packet : Packet) : Buffer{

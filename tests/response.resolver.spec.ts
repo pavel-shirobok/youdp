@@ -4,17 +4,17 @@ import {Packet} from "../src";
 describe("response.resolver", ()=>{
     
     let resolver : ResponseResolver;
+    
     beforeEach(()=>{
         resolver = new ResponseResolver(3, 100);
     });
     
     it("should resolve response", ()=>{
-       let f = Packet.create(null, 1, 0, 1, Buffer.from([]))//new Frame(1, 0, 1, Buffer.from([]));
-        
-        
+       let f = Packet.create(null, 1, 0, 1, Buffer.from([]));//new Frame(1, 0, 1, Buffer.from([]));
+       
        setTimeout(()=>{
            resolver.resolveResponse( Packet.create(null, 1, 1, 1, Buffer.from([])) );
-       }, 50);
+       }, 50 );
        
        return resolver
            .waitResponseFor(f)
@@ -34,7 +34,7 @@ describe("response.resolver", ()=>{
         
         setTimeout(()=>{
             resolver.resolveResponse( Packet.create(null,1, 1, 1, Buffer.from([])) );
-        }, 210);
+        }, 250);
         
         return resolver
             .waitResponseFor(Packet.create(null,1, 0, 1, Buffer.from([])))
@@ -50,9 +50,11 @@ describe("response.resolver", ()=>{
     it("should reject request if timeout and repeats are exceeded", ()=>{
 
         let count = 0;
-        resolver.repeats.subscribe(()=>{
-            count++;
-        });
+        resolver
+            .repeats
+            .subscribe(()=>{
+                count++;
+            });
 
         return resolver
             .waitResponseFor(Packet.create(null,1, 0, 1, Buffer.from([])))
