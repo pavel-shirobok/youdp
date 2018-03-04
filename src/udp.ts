@@ -47,7 +47,7 @@ export class Udp{
         packet.id = this.nextId;
         packet.data = data;
         packet.updateBuffer(this._protocol);
-        return this.io.signal(packet);
+        return this.io.send(packet);
     }
     
     request(addr : NetworkAddress, data : Buffer ) : Promise<Packet> {
@@ -57,7 +57,7 @@ export class Udp{
         packet.id = this.nextId;
         packet.data = data;
         packet.updateBuffer(this._protocol);
-        return this.io.request(packet);
+        return this.io.sendAndWait(packet);
     }
     
     response(addr : NetworkAddress, request : Packet, responseData : Buffer){
@@ -67,7 +67,7 @@ export class Udp{
         packet.id = request.id;
         packet.data = responseData;
         packet.updateBuffer(this._protocol);
-        return this.io.response(packet);
+        return this.io.send(packet);
     }
     
     unbind(){

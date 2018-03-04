@@ -6,7 +6,7 @@ describe("packet.io", ()=>{
     it("should output packet signal", ()=>{
         return new Promise((resolve)=>{
             let io = new PacketIO(12);
-            let f = io.signal(Packet.create(null, 12,1,1, Buffer.from("test")));
+            let f = io.send(Packet.create(null, 12,1,1, Buffer.from("test")));
             
             io.output.subscribe((rFrame : Packet)=>{
                 //let rFrame = //io.protocol.read(buffer);
@@ -27,7 +27,7 @@ describe("packet.io", ()=>{
     it("should output frame request", ()=>{
         return new Promise((resolve)=>{
             let io = new PacketIO(12);
-            io.request(Packet.create(null, 12, PacketIO.REQUEST, 1, Buffer.from("test")));
+            io.sendAndWait(Packet.create(null, 12, PacketIO.REQUEST, 1, Buffer.from("test")));
 
             io.output.subscribe((rFrame)=>{
                 //let rFrame = io.protocol.read(buffer);
@@ -47,7 +47,7 @@ describe("packet.io", ()=>{
         });
         
         return io
-            .request(Packet.create(null, 12, PacketIO.REQUEST, 1, Buffer.from("hello, crab")))
+            .sendAndWait(Packet.create(null, 12, PacketIO.REQUEST, 1, Buffer.from("hello, crab")))
             .then((frame)=>{
                 expect(frame.data.toString()).toBe("hi, lobster");
             });
@@ -66,7 +66,7 @@ describe("packet.io", ()=>{
         });
 
         return io
-            .request(Packet.create(null,12, PacketIO.REQUEST, 1, Buffer.from("hello, crab") ))
+            .sendAndWait(Packet.create(null,12, PacketIO.REQUEST, 1, Buffer.from("hello, crab") ))
             .then((frame)=>{
                 expect(frame.data.toString()).toBe("hi, lobster");
             });

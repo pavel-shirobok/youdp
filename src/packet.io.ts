@@ -1,5 +1,5 @@
 import {Stream} from "litestream";
-import {NetworkAddress, Packet} from "./protocol";
+import {Packet} from "./protocol";
 import {ResponseResolver} from "./response.resolver";
 
 export class PacketIO{
@@ -7,7 +7,6 @@ export class PacketIO{
     static REQUEST : number = 2;
     static RESPONSE : number = 3;
     
-    //private _protocol : Protocol;
     private _input : Stream<Packet>;
     private _output: Stream<Packet>;
     
@@ -33,19 +32,19 @@ export class PacketIO{
         this._responseResolver.repeats.pipe(this.output);
     }
     
-    request( packet : Packet ) : Promise<Packet> {
+    /*request( packet : Packet ) : Promise<Packet> {
         this.dispatchPacket(packet);
         return this._responseResolver.waitResponseFor(packet);
+    }*/
+    
+    send( packet : Packet ) : Packet {
+        this.dispatchPacket(packet);
+        return packet;
     }
     
-    signal( packet : Packet ) : Packet{
+    sendAndWait( packet : Packet ) : Promise<Packet>{
         this.dispatchPacket(packet);
-        return packet;
-    }
-
-    response(packet : Packet ) : Packet{
-        this.dispatchPacket(packet);
-        return packet;
+        return this._responseResolver.waitResponseFor(packet);
     }
     
     private dispatchPacket(packet : Packet){
