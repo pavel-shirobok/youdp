@@ -57,9 +57,9 @@ describe("2 udp with protocol layer", ()=>{
     });
 
     afterEach(()=>{
-        udp1.unbind();
-        udp2.unbind();
         layer1.unbind();
         layer2.unbind();
+        udp1.unbind();
+        udp2.unbind();
     })
 });

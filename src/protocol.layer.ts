@@ -48,7 +48,11 @@ export abstract class ProtocolLayer<I extends LayerPacket, O extends LayerPacket
     }
     
     unbind(){
-        //TODO
+        this._udp.io.onPacket.unpipe(<any>this._onPacket);
+        this._udp.io.onRequest.unpipe(<any>this._onRequest);
+        this._udp.io.onResponse.unpipe(<any>this._onResponse);
+        this._udp.io.onSignal.unpipe(<any>this._onSignal);
+        this._udp = null;
     }
     
     protected abstract read( packet : Packet ) : I;
