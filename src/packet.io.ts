@@ -32,11 +32,6 @@ export class PacketIO{
         this._responseResolver.repeats.pipe(this.output);
     }
     
-    /*request( packet : Packet ) : Promise<Packet> {
-        this.dispatchPacket(packet);
-        return this._responseResolver.waitResponseFor(packet);
-    }*/
-    
     send( packet : Packet ) : Packet {
         this.dispatchPacket(packet);
         return packet;
