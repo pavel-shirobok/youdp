@@ -15,10 +15,6 @@ class PacketIO {
         this._onResponse.pipe(this._responseResolver);
         this._responseResolver.repeats.pipe(this.output);
     }
-    /*request( packet : Packet ) : Promise<Packet> {
-        this.dispatchPacket(packet);
-        return this._responseResolver.waitResponseFor(packet);
-    }*/
     send(packet) {
         this.dispatchPacket(packet);
         return packet;
