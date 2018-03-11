@@ -1,5 +1,5 @@
 import {Packet, Udp} from "../src";
-import {JsonProtocolLayer} from "../src/JsonProtocolLayer";
+import {JsonProtocolLayer} from "../src/json.protocol.layer";
 
 interface TestPacket{
     packet ?: Packet;
